@@ -1,0 +1,4 @@
+class NodeNotFoundException < Exception
+	
+end
+

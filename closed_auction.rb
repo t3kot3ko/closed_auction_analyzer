@@ -41,7 +41,9 @@ class ClosedAuction::Client
 		doc = Nokogiri::HTML.parse(body)
 		table = doc.css("#AS1m1.AS1m.ASic").first
 
-		throw NodeNotFoundException unless table
+		# even one result has not been found
+		return [] unless table
+
 
 		return create_entries(table)
 	end

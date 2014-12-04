@@ -5,8 +5,8 @@ require "date"
 
 module DetailedAuction; end
 
-class DetailedAuction::Entry < Struct.new(:price, :buynow_price, :bids, :starttime, :endtime)
-	def initialize(price, buynow_price, bids, starttime, endtime)
+class DetailedAuction::Entry < Struct.new(:price, :buynow_price, :bids, :starttime, :endtime, :description)
+	def initialize(price, buynow_price, bids, starttime, endtime, description)
 		[price, buynow_price].each do |e|
 			e && e.gsub!("円", "") 
 			e && e.gsub!(",", "")
@@ -15,7 +15,7 @@ class DetailedAuction::Entry < Struct.new(:price, :buynow_price, :bids, :startti
 		price_formatted = price.to_i
 		buynow_price_formatted = buynow_price.empty? ? nil : buynow_price.to_i
 
-		super(price_formatted, buynow_price_formatted, bids, starttime, endtime)
+		super(price_formatted, buynow_price_formatted, bids, starttime, endtime, description)
 	end
 
 	def buynow?
@@ -50,7 +50,9 @@ class DetailedAuction::Client
 		starttime = doc.css("td[property='auction:StartTime']").text
 		endtime = doc.css("td[property='auction:EndTime']").first.children.first.text
 
-		return ::DetailedAuction::Entry.new(price, buynow_price, bids, starttime, endtime)
+		description = doc.css("div.modUsrPrv#acMdUsrPrv").first.text.gsub("\n\n", "\n")
+
+		return ::DetailedAuction::Entry.new(price, buynow_price, bids, starttime, endtime, description)
 	end
 
 	

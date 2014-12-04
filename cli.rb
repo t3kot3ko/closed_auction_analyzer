@@ -1,4 +1,5 @@
 require_relative "./closed_auction"
+require_relative "./detailed_auction"
 
 search_word_arg = ARGV[0..-1]
 
@@ -14,7 +15,28 @@ query = ClosedAuction::SearchQuery.new(search_word)
 
 entries = client.search(query)
 
-entries.sort_by(&:end_price).each do |e|
-	puts "#{e.title}, #{e.end_price}"
+def print_simple(e)
+	puts "#{e.title}, #{e.end_price}, #{e.end_date}"
+	puts "#{e.url}"
+end
+
+def print_verbose(e)
+	puts "=== #{e.title}, #{e.end_price} ==="
+	puts "#{e.url}"
+	d_client = DetailedAuction::Client.new(e.url)
+	parsed = d_client.parse
+
+	puts "#{parsed.description}"
+	puts
+end
+
+entries.sort_by(&:end_date).each do |e|
+	verbose = ENV["VERBOSE"].nil?.!
+
+	if verbose
+		print_verbose e
+	else
+		print_simple e
+	end
 end
 

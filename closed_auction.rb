@@ -2,6 +2,7 @@ require "net/http"
 require "uri"
 require "nokogiri"
 require "date"
+require "pry"
 
 require_relative "./exceptions"
 
@@ -53,9 +54,8 @@ class ClosedAuction::Client
 	def create_entry(tr)
 		url = tr.css("td.i").first.css("a").first.attribute("href").value
 		title = tr.css("td.a1").first.css("h3").first.text
-
-		end_price = tr.css("td.pr2").first.css("span.ePrice").first.text
-		start_price = tr.css("td.pr2").first.css("span.sPrice").first.text
+		end_price = tr.css("td.pr1").first.css("span.ePrice").first.text
+		start_price = tr.css("td.pr1").first.css("span.sPrice").first.text
 		end_date = tr.css("td.pr2").last.css("span.d").first.text
 		end_time = tr.css("td.pr2").last.css("span.t").first.text
 		bid_count = tr.css("td.bi").first.css("a").first.text
@@ -85,6 +85,10 @@ class ClosedAuction::SearchQuery
 			auccat: 0,
 			tab_ex: "commerce",
 		}
+	end
+
+	def create_default(word)
+		return SearchQuery.new(word)
 	end
 
 	def build

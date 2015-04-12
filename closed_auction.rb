@@ -3,9 +3,11 @@ require "uri"
 require "nokogiri"
 require "date"
 require "pry"
+require "logger"
 
 require_relative "./exceptions"
 
+L = Logger.new(STDOUT)
 
 module ClosedAuction; end
 
@@ -23,7 +25,7 @@ end
 
 
 class ClosedAuction::Client
-	BASE_URL = "http://closedsearch.auctions.yahoo.co.jp/jp/"
+	BASE_URL = "http://closedsearch.auctions.yahoo.co.jp/"
 	BASE_URI = URI.parse(BASE_URL)
 
 	def initialize
@@ -34,7 +36,7 @@ class ClosedAuction::Client
 		body = nil
 		@agent.start do |http|
 			url = "/closedsearch?#{query.build}"
-			puts url
+			L.debug url
 			response = http.get(url)
 			body = response.body
 		end
@@ -42,9 +44,10 @@ class ClosedAuction::Client
 		doc = Nokogiri::HTML.parse(body)
 		table = doc.css("#AS1m1.AS1m.ASic").first
 
-		# even one result has not been found
-		return [] unless table
-
+		unless table
+			L.debug "No result found"
+			return []
+		end
 
 		return create_entries(table)
 	end
@@ -78,13 +81,32 @@ end
 
 
 class ClosedAuction::SearchQuery
-	def initialize(word)
-		@params = {
-			p: word.split("\s").join("+"),
+	# istatus: status of item (0: all, 1: new, 2: used)
+	# abranch: issued from (0: all, 1: store, 2: personal)
+	# s1: column to be used for sorting (cbids: end price, bids: count of bits, end: end date)
+	# o1: order (a: asc, d: desc)
+	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, s1: "cbids", o1: "d", page: 1)
+		per_page = 100  # items per page (20, 50 or 100)
+
+		default_params = {
 			ei: "UTF-8",
 			auccat: 0,
+			n: per_page,  # items per page (20, 50 or 100)
 			tab_ex: "commerce",
+			price_type: "currentprice",
+			slider: 0
 		}
+			
+		@params = {
+			va: word.split("\s").join("+"),
+			min: min, 
+			max: max,
+			istatus: istatus, 
+			abranch: abranch,
+			s1: s1,
+			o1: o1, 
+			b: per_page * (page - 1) + 1
+		}.merge(default_params).reject{|k, v| v.nil?}
 	end
 
 	def create_default(word)

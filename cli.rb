@@ -1,42 +1,80 @@
+require "thor"
 require_relative "./closed_auction"
 require_relative "./detailed_auction"
 
-search_word_arg = ARGV[0..-1]
-
-if search_word_arg.empty?
-	puts "Usage: [ruby] #{__FILE__} <search_words>"
-	exit 1
+def default_column
+	return ["title", "end_price", "end_date"]
 end
 
-search_word = search_word_arg.join(" ")
-
-client = ClosedAuction::Client.new
-query = ClosedAuction::SearchQuery.new(search_word)
-
-entries = client.search(query)
-
-def print_simple(e)
-	puts "#{e.title}, #{e.end_price}, #{e.end_date}"
-	puts "#{e.url}"
+def all_valid_columns
+	return ["title", "url", "end_price", "end_date", "start_price", "start_date"]
 end
 
-def print_verbose(e)
-	puts "=== #{e.title}, #{e.end_price} ==="
-	puts "#{e.url}"
-	d_client = DetailedAuction::Client.new(e.url)
-	parsed = d_client.parse
-
-	puts "#{parsed.description}"
-	puts
+def check_column(column)
+	return column.all?{|e| all_valid_columns.include? e}
 end
 
-entries.sort_by(&:end_date).each do |e|
-	verbose = ENV["VERBOSE"].nil?.!
+class CLI < Thor
+	desc "search ", "Search with passed word"
+	option "max", type: :string
+	option "min", type: :string
+	option "outputs", type: :array
+	option "page", type: :numeric, default: 1
+	def search(word)
+		client = ClosedAuction::Client.new
+		query = ClosedAuction::SearchQuery.new(word, 
+																					 min: options[:min], 
+																					 max: options[:max], 
+																					 page: options[:page]
+																					)
 
-	if verbose
-		print_verbose e
-	else
-		print_simple e
+		entries = client.search(query)
+		print_simple(entries, options[:outputs])
 	end
+
+	option "max", type: :string
+	option "min", type: :string
+	desc "avr WORD", "Just obtain the average of end price of closed auction"
+	def avr(word)
+		client = ClosedAuction::Client.new
+		query = ClosedAuction::SearchQuery.new(word, 
+																					 min: options[:min], 
+																					 max: options[:max], 
+																					)
+
+		entries = client.search(query)
+		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
+	end
+
+	private
+	# outputs: columns to be displayed
+	def print_simple(entries, outputs)
+		if outputs.nil? || outputs.empty?
+			entries.each do |e|
+				puts "#{e.title}, #{e.end_price}, #{e.end_date}"
+				puts "#{e.url}"
+			end
+		else
+			columns = outputs.select{|o| all_valid_columns.include? o}
+			puts columns.join(",")
+			entries.each do |e|
+				puts columns.map{|c| e.send(c.to_sym)}.join(",")
+			end
+		end
+
+	end
+
+	def print_verbose(e)
+		puts "=== #{e.title}, #{e.end_price} ==="
+		puts "#{e.url}"
+		d_client = DetailedAuction::Client.new(e.url)
+		parsed = d_client.parse
+
+		puts "#{parsed.description}"
+		puts
+	end
+
 end
+
+CLI.start(ARGV)
 

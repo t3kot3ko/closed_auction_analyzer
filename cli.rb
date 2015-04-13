@@ -29,7 +29,27 @@ class CLI < Thor
 																					)
 
 		entries = client.search(query)
-		print_simple(entries, options[:outputs])
+		print_entries(entries, options[:outputs])
+	end
+
+	# TODO: consider output method 
+	desc "search_all", "Search and obtain ALL results"
+	option "max", type: :string
+	option "min", type: :string
+	option "outputs", type: :array
+	def search_all(word)
+		client = ClosedAuction::Client.new
+		query = ClosedAuction::SearchQuery.new(word, 
+																					 min: options[:min], 
+																					 max: options[:max], 
+																					 page: 0
+																					)
+		loop do
+			entries = client.search(query)
+			break if entries.nil? || entries.empty?
+			print_entries(entries, options[:outputs])
+			query.page += 1
+		end
 	end
 
 	option "max", type: :string
@@ -48,7 +68,7 @@ class CLI < Thor
 
 	private
 	# outputs: columns to be displayed
-	def print_simple(entries, outputs)
+	def print_entries(entries, outputs)
 		if outputs.nil? || outputs.empty?
 			entries.each do |e|
 				puts "#{e.title}, #{e.end_price}, #{e.end_date}"

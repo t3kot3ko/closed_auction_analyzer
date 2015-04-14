@@ -2,16 +2,8 @@ require "thor"
 require_relative "./closed_auction"
 require_relative "./detailed_auction"
 
-def default_column
-	return ["title", "end_price", "end_date"]
-end
-
 def all_valid_columns
 	return ["title", "url", "end_price", "end_date", "start_price", "start_date"]
-end
-
-def check_column(column)
-	return column.all?{|e| all_valid_columns.include? e}
 end
 
 class CLI < Thor

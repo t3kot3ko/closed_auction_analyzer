@@ -52,6 +52,22 @@ class ClosedAuction::Client
 		return create_entries(table)
 	end
 
+	def search_all(base_query)
+		query = base_query.dup	
+		query.page = 0
+
+		result = []
+		loop do
+			entries = self.search(query)
+			break if entries.nil? || entries.empty?
+
+			result += entries
+			query.page += 1
+		end
+
+		return result
+	end
+
 
 	private
 	def create_entry(tr)

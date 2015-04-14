@@ -20,6 +20,7 @@ class CLI < Thor
 	option "min", type: :string
 	option "outputs", type: :array
 	option "page", type: :numeric, default: 1
+	option "all", type: :boolean
 	def search(word)
 		client = ClosedAuction::Client.new
 		query = ClosedAuction::SearchQuery.new(word, 
@@ -28,45 +29,28 @@ class CLI < Thor
 																					 page: options[:page]
 																					)
 
-		entries = client.search(query)
+		entries = options[:all] ? client.search_all(query) : client.search(query)
 		print_entries(entries, options[:outputs])
 	end
 
-	# TODO: consider output method 
-	desc "search_all", "Search and obtain ALL results"
 	option "max", type: :string
 	option "min", type: :string
-	option "outputs", type: :array
-	def search_all(word)
-		client = ClosedAuction::Client.new
-		query = ClosedAuction::SearchQuery.new(word, 
-																					 min: options[:min], 
-																					 max: options[:max], 
-																					 page: 0
-																					)
-		loop do
-			entries = client.search(query)
-			break if entries.nil? || entries.empty?
-			print_entries(entries, options[:outputs])
-			query.page += 1
-		end
-	end
-
-	option "max", type: :string
-	option "min", type: :string
+	option "all", type: :boolean
+	option "page", type: :numeric, default: 1
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
 		client = ClosedAuction::Client.new
 		query = ClosedAuction::SearchQuery.new(word, 
 																					 min: options[:min], 
 																					 max: options[:max], 
+																					 page: options[:page]
 																					)
 
-		entries = client.search(query)
+		entries = options[:all] ? client.search_all(query) : client.search(query)
 		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
 	end
 
-	private
+
 	# outputs: columns to be displayed
 	def print_entries(entries, outputs)
 		if outputs.nil? || outputs.empty?

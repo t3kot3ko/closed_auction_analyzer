@@ -7,12 +7,13 @@ def all_valid_columns
 end
 
 class CLI < Thor
+	class_option "max", type: :string
+	class_option "min", type: :string
+	class_option "page", type: :numeric, default: 1
+	class_option "all", type: :boolean
+
 	desc "search ", "Search with passed word"
-	option "max", type: :string
-	option "min", type: :string
 	option "outputs", type: :array
-	option "page", type: :numeric, default: 1
-	option "all", type: :boolean
 	def search(word)
 		client = ClosedAuction::Client.new
 		query = ClosedAuction::SearchQuery.new(word, 
@@ -25,10 +26,6 @@ class CLI < Thor
 		print_entries(entries, options[:outputs])
 	end
 
-	option "max", type: :string
-	option "min", type: :string
-	option "all", type: :boolean
-	option "page", type: :numeric, default: 1
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
 		client = ClosedAuction::Client.new

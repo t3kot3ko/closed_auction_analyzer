@@ -39,11 +39,11 @@ class CLI < Thor
 		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
 	end
 
-	desc "spectrum WORD", "Show a spectrum of the end price distribution"
+	desc "histogram WORD", "Show a histogram of the end price distribution"
 	option "star", {type: :boolean, default: false}
 	option "scale", {type: :numeric, default: 1}
 	option "interval", {type: :numeric}
-	def spectrum(word)
+	def histogram(word)
 		# TODO: extract creation of client and query
 		client = ClosedAuction::Client.new
 		query = ClosedAuction::SearchQuery.new(word, 
@@ -55,7 +55,7 @@ class CLI < Thor
 		entries = options[:all] ? client.search_all(query) : client.search(query)
 		prices = entries.map(&:end_price).sort
 
-		# MEMO: example of generating spectrum
+		# MEMO: example of generating histogram
 		# prices = [1210, 1240, 1300, 1310, 1320, 1520], interval = 100
 		# => [1200~1300: 2, 1300~1400: 3, 1400~1500: 0, 1500~1600: 1]
 

@@ -39,6 +39,49 @@ class CLI < Thor
 		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
 	end
 
+	desc "spectrum WORD", "Show a spectrum of the end price distribution"
+	option "star", {type: :boolean, default: false}
+	option "scale", {type: :numeric, default: 1}
+	option "interval", {type: :numeric}
+	def spectrum(word)
+		# TODO: extract creation of client and query
+		client = ClosedAuction::Client.new
+		query = ClosedAuction::SearchQuery.new(word, 
+																					 min: options[:min], 
+																					 max: options[:max], 
+																					 page: options[:page]
+																					)
+
+		entries = options[:all] ? client.search_all(query) : client.search(query)
+		prices = entries.map(&:end_price).sort
+
+		# MEMO: example of generating spectrum
+		# prices = [1210, 1240, 1300, 1310, 1320, 1520], interval = 100
+		# => [1200~1300: 2, 1300~1400: 3, 1400~1500: 0, 1500~1600: 1]
+
+		min = prices.first
+		max = prices.last
+
+		# unless interval is set, it will be assigned automatically; e.x. 2345 -> 100
+		interval = options[:interval] || 10 ** ([(max - min).to_s.size - 2, 0].max)
+		unless interval > 0
+			L.fatal "Interval must be >0" and exit 1
+		end
+
+		s = min / interval 
+		e = max / interval + 1
+		digits = max.to_s.size
+
+		result = []
+		(s...e).each do |i|
+			result << [i, prices.count{|price| i * interval <= price && price < (i + 1) * interval} / options[:scale]]
+		end
+
+		guide_format = "%#{digits.to_s}d"
+		result.each do |i, count|
+			puts "#{sprintf(guide_format, i * interval)} ~ #{sprintf(guide_format, (i + 1) * interval)}: #{options[:star] ? "*" * count : count.to_s}"
+		end
+	end
 
 	# outputs: columns to be displayed
 	def print_entries(entries, outputs)

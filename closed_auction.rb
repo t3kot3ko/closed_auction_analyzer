@@ -54,7 +54,7 @@ class ClosedAuction::Client
 
 	def search_all(base_query)
 		query = base_query.dup	
-		query.page = 0
+		query.page = 1
 
 		result = []
 		loop do

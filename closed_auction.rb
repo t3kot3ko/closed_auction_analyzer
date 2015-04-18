@@ -104,7 +104,7 @@ class ClosedAuction::SearchQuery
 	# abranch: issued from (0: all, 1: store, 2: personal)
 	# s1: column to be used for sorting (cbids: end price, bids: count of bits, end: end date)
 	# o1: order (a: asc, d: desc)
-	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, s1: "cbids", o1: "d", page: 1)
+	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, sort: "cbids", order: "d", page: 1)
 		@page = page
 
 		default_params = {
@@ -122,8 +122,8 @@ class ClosedAuction::SearchQuery
 			max: max,
 			istatus: istatus, 
 			abranch: abranch,
-			s1: s1,
-			o1: o1, 
+			s1: sort,
+			o1: order, 
 		}.merge(default_params).reject{|k, v| v.nil?}
 	end
 

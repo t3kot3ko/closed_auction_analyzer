@@ -11,16 +11,14 @@ class CLI < Thor
 	class_option "min", type: :string
 	class_option "page", type: :numeric, default: 1
 	class_option "all", type: :boolean
+	class_option "sort", type: :string, default: "cbits"
+	class_option "order", type: :string, default: "d"
 
 	desc "search ", "Search with passed word"
 	option "outputs", type: :array
 	def search(word)
 		client = ClosedAuction::Client.new
-		query = ClosedAuction::SearchQuery.new(word, 
-																					 min: options[:min], 
-																					 max: options[:max], 
-																					 page: options[:page]
-																					)
+		query = __create_query(word, options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
 		print_entries(entries, options[:outputs])
@@ -29,11 +27,7 @@ class CLI < Thor
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
 		client = ClosedAuction::Client.new
-		query = ClosedAuction::SearchQuery.new(word, 
-																					 min: options[:min], 
-																					 max: options[:max], 
-																					 page: options[:page]
-																					)
+		query = __create_query(word, options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
 		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
@@ -46,11 +40,7 @@ class CLI < Thor
 	def histogram(word)
 		# TODO: extract creation of client and query
 		client = ClosedAuction::Client.new
-		query = ClosedAuction::SearchQuery.new(word, 
-																					 min: options[:min], 
-																					 max: options[:max], 
-																					 page: options[:page]
-																					)
+		query = __create_query(word, options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
 		prices = entries.map(&:end_price).sort
@@ -84,6 +74,17 @@ class CLI < Thor
 	end
 
 	private
+	def __create_query(word, options)
+		query = ClosedAuction::SearchQuery.new(word, 
+																					 min: options[:min], 
+																					 max: options[:max], 
+																					 page: options[:page],
+																					 sort: options[:sort],
+																					 order: options[:order]
+																					)
+		return query
+
+	end
 	# outputs: columns to be displayed
 	def print_entries(entries, outputs)
 		if outputs.nil? || outputs.empty?

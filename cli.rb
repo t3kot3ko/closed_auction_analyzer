@@ -83,6 +83,7 @@ class CLI < Thor
 		end
 	end
 
+	private
 	# outputs: columns to be displayed
 	def print_entries(entries, outputs)
 		if outputs.nil? || outputs.empty?

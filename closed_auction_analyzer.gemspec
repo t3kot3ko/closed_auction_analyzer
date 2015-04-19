@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["kamiya7140@gmail.com"]
   spec.summary       = %q{Analyzer of closed auction.}
 	spec.description   = %q{Search closed auctions, provide their properties (e.g. end price, bit count, etc), calc average of end price, and show histogram of price distribution.}
-  spec.homepage      = ""
+	spec.homepage      = "https://github.com/t3kot3ko/closed_auction_analyzer"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")

@@ -2,8 +2,8 @@ require "thor"
 require "json"
 require "yaml"
 
-require_relative "./closed_auction"
-require_relative "./detailed_auction"
+require "closed_auction_analyzer/closed_auction"
+require "closed_auction_analyzer/detailed_auction"
 
 def all_valid_columns
   return %w(url title end_price start_price end_date end_time bid_count)
@@ -125,6 +125,4 @@ class CLI < Thor
 	end
 
 end
-
-CLI.start(ARGV)
 

@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require "closed_auction_analyzer/cli"
+CLI.start(ARGV)

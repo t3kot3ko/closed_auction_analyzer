@@ -1,4 +1,4 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "nokogiri"
-gem "thor"
+# Specify your gem's dependencies in closed_auction_analyzer.gemspec
+gemspec

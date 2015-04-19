@@ -2,10 +2,9 @@ require "net/http"
 require "uri"
 require "nokogiri"
 require "date"
-require "pry"
 require "logger"
 
-require_relative "./exceptions"
+require "closed_auction_analyzer/exceptions"
 
 L = Logger.new(STDOUT)
 if ENV["DISABLE_LOGGER"] == "true"
@@ -144,7 +143,7 @@ end
 
 
 if __FILE__ == $0
-	require_relative "./detailed_auction"
+	require "closed_auction_analyzer/detailed_auction"
 
 	client = ClosedAuction::Client.new
 	query = ClosedAuction::SearchQuery.new("happy hacking lite")

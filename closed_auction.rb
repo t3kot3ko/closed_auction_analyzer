@@ -8,6 +8,9 @@ require "logger"
 require_relative "./exceptions"
 
 L = Logger.new(STDOUT)
+if ENV["DISABLE_LOGGER"] == "true"
+	L.level = Logger::FATAL
+end
 
 module ClosedAuction; end
 

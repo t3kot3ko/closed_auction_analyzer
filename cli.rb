@@ -19,7 +19,7 @@ class CLI < Thor
 
 	desc "search ", "Search with passed word"
 	option "outputs", type: :array, default: []
-	option "format", type: :string, required: false
+	option "format", type: :string, default: "csv"
 	def search(word)
 		client = ClosedAuction::Client.new
 		query = __create_query(word, options)
@@ -103,7 +103,7 @@ class CLI < Thor
 		when /csv/
 			puts columns.join(",")
 			rows.each do |row|
-				puts entry.join(",")
+				puts row.join(",")
 			end
 		when /json/
 			puts rows.map{|row| columns.zip(row).to_h}.to_json

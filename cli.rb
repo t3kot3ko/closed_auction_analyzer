@@ -1,9 +1,12 @@
 require "thor"
+require "json"
+require "yaml"
+
 require_relative "./closed_auction"
 require_relative "./detailed_auction"
 
 def all_valid_columns
-	return ["title", "url", "end_price", "end_date", "start_price", "start_date"]
+  return %w(url title end_price start_price end_date end_time bid_count)
 end
 
 class CLI < Thor
@@ -15,13 +18,14 @@ class CLI < Thor
 	class_option "order", type: :string, default: "d"
 
 	desc "search ", "Search with passed word"
-	option "outputs", type: :array
+	option "outputs", type: :array, default: []
+	option "format", type: :string, required: false
 	def search(word)
 		client = ClosedAuction::Client.new
 		query = __create_query(word, options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
-		print_entries(entries, options[:outputs])
+		print_entries(entries, options[:outputs], options[:format])
 	end
 
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
@@ -83,23 +87,31 @@ class CLI < Thor
 																					 order: options[:order]
 																					)
 		return query
-
 	end
+
 	# outputs: columns to be displayed
-	def print_entries(entries, outputs)
-		if outputs.nil? || outputs.empty?
-			entries.each do |e|
-				puts "#{e.title}, #{e.end_price}, #{e.end_date}"
-				puts "#{e.url}"
-			end
-		else
-			columns = outputs.select{|o| all_valid_columns.include? o}
-			puts columns.join(",")
-			entries.each do |e|
-				puts columns.map{|c| e.send(c.to_sym)}.join(",")
-			end
+	def print_entries(entries, outputs, format = "csv")
+		columns = outputs.select{|o| all_valid_columns.include? o}
+		columns = all_valid_columns if columns.empty?
+
+		rows = entries.map do |e|
+			columns.map{|c| e.send(c.to_sym)}
 		end
 
+		# print to console in specified format
+		case format
+		when /csv/
+			puts columns.join(",")
+			rows.each do |row|
+				puts entry.join(",")
+			end
+		when /json/
+			puts rows.map{|row| columns.zip(row).to_h}.to_json
+		when /yml|yaml|/
+			puts rows.map{|row| columns.zip(row).to_h}.to_yaml
+		else
+			L.fatal "Invalid output format: `#{format}`" and exit 1
+		end
 	end
 
 	def print_verbose(e)

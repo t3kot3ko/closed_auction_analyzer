@@ -41,16 +41,12 @@ class DetailedAuction::Client
 	end
 
 	def create_entry(doc)
-		price = doc.css("p.decTxtAucPrice").text
-		buynow_price = doc.css("p.decTxtBuyPrice").text
-
-
-		bids = doc.css("b[property='auction:Bids']").text.to_i
-
-		starttime = doc.css("td[property='auction:StartTime']").text
-		endtime = doc.css("td[property='auction:EndTime']").first.children.first.text
-
-		description = doc.css("div.modUsrPrv#acMdUsrPrv").first.text.gsub("\n\n", "\n")
+		price = doc.css("p.decTxtAucPrice").text rescue nil
+		buynow_price = doc.css("p.decTxtBuyPrice").text rescue nil
+		bids = doc.css("b[property='auction:Bids']").text.to_i rescue nil
+		starttime = doc.css("td[property='auction:StartTime']").text rescue nil
+		endtime = doc.css("td[property='auction:EndTime']").first.children.first.text rescue nil
+		description = doc.css("div.modUsrPrv#acMdUsrPrv").first.text.gsub("\n\n", "\n") rescue nil
 
 		return ::DetailedAuction::Entry.new(price, buynow_price, bids, starttime, endtime, description)
 	end
@@ -59,7 +55,7 @@ class DetailedAuction::Client
 end
 
 if __FILE__ == $0
-	url = "http://page11.auctions.yahoo.co.jp/jp/auction/n137117723"
+	url = "http://page18.auctions.yahoo.co.jp/jp/auction/w119954423"
 	client = DetailedAuction::Client.new(url)
 
 	entry = client.parse

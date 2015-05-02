@@ -10,16 +10,16 @@ def all_valid_columns
 end
 
 class CLI < Thor
-	class_option "max", type: :string
-	class_option "min", type: :string
-	class_option "page", type: :numeric, default: 1
-	class_option "all", type: :boolean
-	class_option "sort", type: :string, default: "cbits"
-	class_option "order", type: :string, default: "d"
+	class_option "max", type: :string, desc: "Max of end price"
+	class_option "min", type: :string, desc: "Min of end price"
+	class_option "page", type: :numeric, default: 1, desc: "Page index"
+	class_option "all", type: :boolean, desc: "If selected, all available results are fetched"
+	class_option "sort", type: :string, default: "cbids", desc: "Sorting key (cbids: end price, bids: count of bits, end: end date)"
+	class_option "order", type: :string, default: "d", desc: "Ordering (a: asc, d: desc)"
 
 	desc "search ", "Search with passed word"
-	option "outputs", type: :array, default: []
-	option "format", type: :string, default: "csv"
+	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
+	option "format", type: :string, default: "csv", desc: "Output format (csv, yaml, or json)"
 	def search(word)
 		client = ClosedAuction::Client.new
 		query = __create_query(word, options)

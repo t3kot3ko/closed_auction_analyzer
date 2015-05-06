@@ -108,7 +108,7 @@ class ClosedAuction::SearchQuery
 	# per_page: 20, 50 or 100
 	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, sort: "cbids", order: "d", page: 1, per_page: 100)
 		@page = page
-		@per_page = per_page
+		@per_page = [20, 50, 100].include?(per_page) ? per_page : 100
 
 		default_params = {
 			ei: "UTF-8",

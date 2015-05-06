@@ -53,6 +53,9 @@ class DetailedAuction::Client
 		endtime = doc.css("td[property='auction:EndTime']").first.children.first.text rescue nil
 		description = doc.css("div.modUsrPrv#acMdUsrPrv").first.text.gsub("\n\n", "\n") rescue nil
 
+		# eliminate empty lines
+		description = description.split("\n").reject{|line| line =~ /^\s*$/}.join("\n")
+
 		return ::DetailedAuction::Entry.new(price, buynow_price, bids, starttime, endtime, description)
 	end
 

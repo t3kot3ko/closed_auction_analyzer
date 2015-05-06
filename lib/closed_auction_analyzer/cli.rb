@@ -16,6 +16,7 @@ class CLI < Thor
 	class_option "all", type: :boolean, desc: "If selected, all available results are fetched"
 	class_option "sort", type: :string, default: "cbids", desc: "Sorting key (cbids: end price, bids: count of bits, end: end date)"
 	class_option "order", type: :string, default: "d", desc: "Ordering (a: asc, d: desc)"
+	class_option "per_page", type: :numeric, default: 100, desc: "The number of fetched entries per page (20, 50 or 100)"
 
 	desc "search ", "Search with passed word"
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
@@ -103,7 +104,8 @@ class CLI < Thor
 																					 max: options[:max], 
 																					 page: options[:page],
 																					 sort: options[:sort],
-																					 order: options[:order]
+																					 order: options[:order],
+																					 per_page: options[:per_page]
 																					)
 		return query
 	end

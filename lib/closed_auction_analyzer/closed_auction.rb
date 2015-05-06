@@ -100,19 +100,19 @@ end
 
 class ClosedAuction::SearchQuery
 	attr_accessor :page
-	PER_PAGE = 100
 
 	# istatus: status of item (0: all, 1: new, 2: used)
 	# abranch: issued from (0: all, 1: store, 2: personal)
 	# s1: column to be used for sorting (cbids: end price, bids: count of bits, end: end date)
 	# o1: order (a: asc, d: desc)
-	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, sort: "cbids", order: "d", page: 1)
+	# per_page: 20, 50 or 100
+	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, sort: "cbids", order: "d", page: 1, per_page: 100)
 		@page = page
+		@per_page = per_page
 
 		default_params = {
 			ei: "UTF-8",
 			auccat: 0,
-			n: PER_PAGE,  # items per page (20, 50 or 100)
 			tab_ex: "commerce",
 			price_type: "currentprice",
 			slider: 0
@@ -126,6 +126,7 @@ class ClosedAuction::SearchQuery
 			abranch: abranch,
 			s1: sort,
 			o1: order, 
+			n: @per_page
 		}.merge(default_params).reject{|k, v| v.nil?}
 	end
 
@@ -135,7 +136,7 @@ class ClosedAuction::SearchQuery
 
 	def build
 		result = 
-			@params.merge(b: PER_PAGE * (@page - 1) + 1)
+			@params.merge(b: @per_page * (@page - 1) + 1)
 			.map{|key, value| "#{key.to_s}=#{value.to_s}"}.join("&")
 		return result
 	end

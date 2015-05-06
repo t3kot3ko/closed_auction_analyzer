@@ -97,6 +97,22 @@ class CLI < Thor
 		end
 	end
 
+	
+	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
+	desc "show URL", "Show detailed auction data in CLI"
+	def show(url)
+		outputs = options[:outputs]
+		client = DetailedAuction::Client.new(url)
+		entry = client.parse
+		columns = outputs.select{|o| DetailedAuction::Entry::all_valid_columns.include? o}
+		columns = DetailedAuction::Entry::all_valid_columns if columns.empty?
+
+		columns.each do |column|
+			puts "#{column}:"
+			puts entry.send(column.to_sym)
+		end
+	end
+
 	private
 	def __create_query(word, options)
 		query = ClosedAuction::SearchQuery.new(word, 

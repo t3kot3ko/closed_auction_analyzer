@@ -6,6 +6,10 @@ require "date"
 module DetailedAuction; end
 
 class DetailedAuction::Entry < Struct.new(:price, :buynow_price, :bids, :starttime, :endtime, :description)
+	def self.all_valid_columns
+		return %w(price buynow_price bids starttime endtime description)
+	end
+
 	def initialize(price, buynow_price, bids, starttime, endtime, description)
 		[price, buynow_price].each do |e|
 			e && e.gsub!("円", "") 
@@ -21,6 +25,7 @@ class DetailedAuction::Entry < Struct.new(:price, :buynow_price, :bids, :startti
 	def buynow?
 		return self.buynow_price.nil?.!
 	end
+
 end
 
 class DetailedAuction::Client

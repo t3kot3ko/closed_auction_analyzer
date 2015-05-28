@@ -116,7 +116,7 @@ class CLI < Thor
 
 			entries.select! do |entry| 
 				title = entry.title
-				forward_filter.all?{|f| title =~ /#{f}/} && inverse_filter.all?{|inv| !(title =~ /#{inv}/)}
+				forward_filter.all?{|f| title =~ /#{f}/i} && inverse_filter.all?{|inv| !(title =~ /#{inv}/i)}
 			end
 		end
 

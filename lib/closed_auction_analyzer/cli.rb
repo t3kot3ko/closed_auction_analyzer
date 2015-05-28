@@ -17,15 +17,32 @@ class CLI < Thor
 	class_option "sort", type: :string, default: "cbids", desc: "Sorting key (cbids: end price, bids: count of bits, end: end date)"
 	class_option "order", type: :string, default: "d", desc: "Ordering (a: asc, d: desc)"
 	class_option "per_page", type: :numeric, default: 100, desc: "The number of fetched entries per page (20, 50 or 100)"
+	class_option "filter", type: :array, default: [], desc: "Title filter (with v:WORD, entries whose title includes WORD are excluded)"
 
 	desc "search ", "Search with passed word"
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
 	option "format", type: :string, default: "csv", desc: "Output format (csv, yaml, or json)"
 	def search(word)
 		client = ClosedAuction::Client.new
-		query = __create_query(word, options)
+
+		filter_options = options[:filter]
+		query_options = options.reject{|k, v| k == :filter}
+		query = __create_query(word, query_options)
+		forward_filter, inverse_filter = __create_filter(filter_options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
+
+		# apply filter
+		if !forward_filter.empty? || !inverse_filter.empty?
+			L.debug "forward: " + forward_filter.join(", ")
+			L.debug "inverse: " + inverse_filter.join(", ")
+
+			entries.select! do |entry| 
+				title = entry.title
+				forward_filter.all?{|f| title =~ /#{f}/} && inverse_filter.all?{|inv| !(title =~ /#{inv}/)}
+			end
+		end
+
 		print_entries(entries, options[:outputs], options[:format])
 	end
 
@@ -64,12 +81,13 @@ class CLI < Thor
 	def histogram(word)
 		# TODO: extract creation of client and query
 		client = ClosedAuction::Client.new
+
 		query = __create_query(word, options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)
 		prices = entries.map(&:end_price).sort
 
-		# MEMO: example of generating histogram
+    # MEMO: example of generating histogram
 		# prices = [1210, 1240, 1300, 1310, 1320, 1520], interval = 100
 		# => [1200~1300: 2, 1300~1400: 3, 1400~1500: 0, 1500~1600: 1]
 
@@ -124,6 +142,22 @@ class CLI < Thor
 																					 per_page: options[:per_page]
 																					)
 		return query
+	end
+
+	def __create_filter(filter_options)
+		L.debug filter_options
+		forward = []
+		inverse = []
+
+		filter_options.each do |f|
+			if word = f.scan(/v:(.*)/).flatten.first
+				inverse << word
+			else
+				forward << f
+			end
+		end
+
+		return forward, inverse
 	end
 
 	# outputs: columns to be displayed

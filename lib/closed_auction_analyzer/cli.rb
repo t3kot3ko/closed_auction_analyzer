@@ -30,19 +30,31 @@ class CLI < Thor
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
 		entries = get_entries(word, options)
-		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
+		if entries.empty?
+			L.error "No entries found"
+		else
+		  puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
+		end
 	end
 
 	desc "max WORD", "Just obtain the maximum of end price of closed auction"
   def max(word)
 		entries = get_entries(word, options)
-		puts entries.map(&:end_price).max
+		if entries.empty?
+			L.error "No entries found"
+		else
+			puts entries.map(&:end_price).max
+		end
 	end
 
 	desc "min WORD", "Just obtain the minimum of end price of closed auction"
   def min(word)
 		entries = get_entries(word, options)
-		puts entries.map(&:end_price).min
+		if entries.empty?
+			L.error "No entries found"
+		else
+			puts entries.map(&:end_price).min
+		end
 	end
 
 	desc "histogram WORD", "Show a histogram of the end price distribution"

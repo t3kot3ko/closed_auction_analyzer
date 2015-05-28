@@ -23,54 +23,25 @@ class CLI < Thor
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
 	option "format", type: :string, default: "csv", desc: "Output format (csv, yaml, or json)"
 	def search(word)
-		client = ClosedAuction::Client.new
-
-		filter_options = options[:filter]
-		query_options = options.reject{|k, v| k == :filter}
-		query = __create_query(word, query_options)
-		forward_filter, inverse_filter = __create_filter(filter_options)
-
-		entries = options[:all] ? client.search_all(query) : client.search(query)
-
-		# apply filter
-		if !forward_filter.empty? || !inverse_filter.empty?
-			L.debug "forward: " + forward_filter.join(", ")
-			L.debug "inverse: " + inverse_filter.join(", ")
-
-			entries.select! do |entry| 
-				title = entry.title
-				forward_filter.all?{|f| title =~ /#{f}/} && inverse_filter.all?{|inv| !(title =~ /#{inv}/)}
-			end
-		end
-
+		entries = get_entries(word, options)
 		print_entries(entries, options[:outputs], options[:format])
 	end
 
-	# TODO: extract duplicated codes
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
-		client = ClosedAuction::Client.new
-		query = __create_query(word, options)
-
-		entries = options[:all] ? client.search_all(query) : client.search(query)
+		entries = get_entries(word, options)
 		puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
 	end
 
 	desc "max WORD", "Just obtain the maximum of end price of closed auction"
   def max(word)
-		client = ClosedAuction::Client.new
-		query = __create_query(word, options)
-
-		entries = options[:all] ? client.search_all(query) : client.search(query)
+		entries = get_entries(word, options)
 		puts entries.map(&:end_price).max
 	end
 
 	desc "min WORD", "Just obtain the minimum of end price of closed auction"
   def min(word)
-		client = ClosedAuction::Client.new
-		query = __create_query(word, options)
-
-		entries = options[:all] ? client.search_all(query) : client.search(query)
+		entries = get_entries(word, options)
 		puts entries.map(&:end_price).min
 	end
 
@@ -79,12 +50,7 @@ class CLI < Thor
 	option "scale", {type: :numeric, default: 1}
 	option "interval", {type: :numeric}
 	def histogram(word)
-		# TODO: extract creation of client and query
-		client = ClosedAuction::Client.new
-
-		query = __create_query(word, options)
-
-		entries = options[:all] ? client.search_all(query) : client.search(query)
+		entries = get_entries(word, options)
 		prices = entries.map(&:end_price).sort
 
     # MEMO: example of generating histogram
@@ -132,20 +98,45 @@ class CLI < Thor
 	end
 
 	private
-	def __create_query(word, options)
-		query = ClosedAuction::SearchQuery.new(word, 
-																					 min: options[:min], 
-																					 max: options[:max], 
-																					 page: options[:page],
-																					 sort: options[:sort],
-																					 order: options[:order],
-																					 per_page: options[:per_page]
-																					)
+	
+	def get_entries(word, options)
+		client = ClosedAuction::Client.new
+
+		filter_options = options[:filter]
+		query_options = options.reject{|k, v| k == :filter}
+		query = __create_query(word, query_options)
+		forward_filter, inverse_filter = __create_filter(filter_options)
+
+		entries = options[:all] ? client.search_all(query) : client.search(query)
+
+		# apply filter (all filters are evaluated by AND)
+		if !forward_filter.empty? || !inverse_filter.empty?
+			L.debug "forward: " + forward_filter.join(", ")
+			L.debug "inverse: " + inverse_filter.join(", ")
+
+			entries.select! do |entry| 
+				title = entry.title
+				forward_filter.all?{|f| title =~ /#{f}/} && inverse_filter.all?{|inv| !(title =~ /#{inv}/)}
+			end
+		end
+
+		return entries
+	end
+
+	def __create_query(word, query_options)
+		query = \
+			ClosedAuction::SearchQuery.new(word, 
+																		 min: query_options[:min], 
+																		 max: query_options[:max], 
+																		 page: query_options[:page],
+																		 sort: query_options[:sort],
+																		 order: query_options[:order],
+																		 per_page: query_options[:per_page]
+																		)
 		return query
 	end
 
 	def __create_filter(filter_options)
-		L.debug filter_options
 		forward = []
 		inverse = []
 

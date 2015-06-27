@@ -23,6 +23,10 @@ class ClosedAuction::Entry < Struct.new(:url, :title, :end_price, :start_price, 
 
 		super(url, title, end_price_formatted, start_price_formatted, end_date_formatted, end_time,  bid_count)
 	end
+
+	def self.all_valid_columns
+		return %w(url title end_price start_price end_date end_time bid_count)
+	end
 end
 
 

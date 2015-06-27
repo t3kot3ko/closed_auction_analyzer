@@ -5,9 +5,6 @@ require "yaml"
 require "closed_auction_analyzer/closed_auction"
 require "closed_auction_analyzer/detailed_auction"
 
-def all_valid_columns
-  return %w(url title end_price start_price end_date end_time bid_count)
-end
 
 class CLI < Thor
 	class_option "max", type: :string, desc: "Max of end price"
@@ -19,7 +16,7 @@ class CLI < Thor
 	class_option "per_page", type: :numeric, default: 100, desc: "The number of fetched entries per page (20, 50 or 100)"
 	class_option "filter", type: :array, default: [], desc: "Title filter (with v:WORD, entries whose title includes WORD are excluded)"
 
-	desc "search ", "Search with passed word"
+	desc "search WORD", "Search with passed word"
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
 	option "format", type: :string, default: "csv", desc: "Output format (csv, yaml, or json)"
 	def search(word)
@@ -165,8 +162,8 @@ class CLI < Thor
 
 	# outputs: columns to be displayed
 	def print_entries(entries, outputs, format = "csv")
-		columns = outputs.select{|o| all_valid_columns.include? o}
-		columns = all_valid_columns if columns.empty?
+		columns = outputs.select{|o| ClosedAuction::Entry::all_valid_columns.include? o}
+		columns = ClosedAuction::Entry::all_valid_columns if columns.empty?
 
 		rows = entries.map do |e|
 			columns.map{|c| e.send(c.to_sym)}

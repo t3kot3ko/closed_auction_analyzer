@@ -5,8 +5,26 @@ require "yaml"
 require "closed_auction_analyzer/closed_auction"
 require "closed_auction_analyzer/detailed_auction"
 
+module ArrayEx
+	refine Array do 
+		# e.g.) [1, 8, 4] <=> [1, 7, 9]  #=> 1
+		def <=>(other)
+			self.zip(other).each do |s, o|
+				next if s == o
+
+				return -1 if s && !o
+				return 1 if !s && o
+
+				return s <=> o
+			end
+		end
+	end
+end
+
 
 class CLI < Thor
+	using ArrayEx
+
 	class_option "max", type: :string, desc: "Max of end price"
 	class_option "min", type: :string, desc: "Min of end price"
 	class_option "page", type: :numeric, default: 1, desc: "Page index"
@@ -103,6 +121,32 @@ class CLI < Thor
 		columns.each do |column|
 			puts "#{column}:"
 			puts entry.send(column.to_sym)
+		end
+	end
+
+	# TODO: consider to integrate into other command
+	desc "group WORD", "Group entries by finished day, month or yeaar"
+	option "index", type: :string, default: "day", desc: ""
+	def group(word)
+		entries = get_entries(word, options)
+
+		grouped_entries = 
+			case options[:index]
+			when "year"
+				entries.group_by{|e| [e.end_date.year]}
+			when "month"
+				entries.group_by{|e| [e.end_date.year, e.end_date.month]}
+			when "day"
+				entries.group_by{|e| [e.end_date.year, e.end_date.month, e.end_date.day]}
+			else
+				entries.group_by{|e| [e.end_date.year, e.end_date.month, e.end_date.day]}
+			end
+		
+		grouped_entries.keys.sort.each do |key|
+			entries_in_group = grouped_entries.fetch(key)
+			avr = entries_in_group.inject(0){|r, i| r += i.end_price}.to_f / entries_in_group.count
+			date = key.join("/")
+			puts "#{date}: #{avr}"
 		end
 	end
 

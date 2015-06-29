@@ -34,19 +34,25 @@ class CLI < Thor
 	class_option "per_page", type: :numeric, default: 100, desc: "The number of fetched entries per page (20, 50 or 100)"
 	class_option "filter", type: :array, default: [], desc: "Title filter (with v:WORD, entries whose title includes WORD are excluded)"
 
+	class_option "debug", type: :boolean, default: false, desc: "Flag to show debug logs"
+
 	desc "search WORD", "Search with passed word"
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
 	option "format", type: :string, default: "csv", desc: "Output format (csv, yaml, or json)"
 	def search(word)
+		__configure(options)		
+
 		entries = get_entries(word, options)
 		print_entries(entries, options[:outputs], options[:format])
 	end
 
 	desc "avr WORD", "Just obtain the average of end price of closed auction"
 	def avr(word)
+		__configure(options)		
+
 		entries = get_entries(word, options)
 		if entries.empty?
-			L.error "No entries found"
+			ClosedAuctionAnalyzer::SimpleLogger.instance.error "No entries found"
 		else
 		  puts entries.inject(0){|r, i| r += i.end_price}.to_f / entries.count
 		end
@@ -56,7 +62,7 @@ class CLI < Thor
   def max(word)
 		entries = get_entries(word, options)
 		if entries.empty?
-			L.error "No entries found"
+			ClosedAuctionAnalyzer::SimpleLogger.instance.error "No entries found"
 		else
 			puts entries.map(&:end_price).max
 		end
@@ -64,9 +70,11 @@ class CLI < Thor
 
 	desc "min WORD", "Just obtain the minimum of end price of closed auction"
   def min(word)
+		__configure(options)		
+
 		entries = get_entries(word, options)
 		if entries.empty?
-			L.error "No entries found"
+			ClosedAuctionAnalyzer::SimpleLogger.instance.error "No entries found"
 		else
 			puts entries.map(&:end_price).min
 		end
@@ -77,6 +85,8 @@ class CLI < Thor
 	option "scale", {type: :numeric, default: 1}
 	option "interval", {type: :numeric}
 	def histogram(word)
+		__configure(options)
+
 		entries = get_entries(word, options)
 		prices = entries.map(&:end_price).sort
 
@@ -90,7 +100,7 @@ class CLI < Thor
 		# unless interval is set, it will be assigned automatically; e.x. 2345 -> 100
 		interval = options[:interval] || 10 ** ([(max - min).to_s.size - 2, 0].max)
 		unless interval > 0
-			L.fatal "Interval must be >0" and exit 1
+			ClosedAuctionAnalyzer::SimpleLogger.instance.fatal "Interval must be >0" and exit 1
 		end
 
 		s = min / interval 
@@ -112,6 +122,8 @@ class CLI < Thor
 	option "outputs", type: :array, default: [], desc: "Columns to display (if empty, all columns are displayed)"
 	desc "show URL", "Show detailed auction data in CLI"
 	def show(url)
+		__configure(options)
+
 		outputs = options[:outputs]
 		client = DetailedAuction::Client.new(url)
 		entry = client.parse
@@ -128,6 +140,8 @@ class CLI < Thor
 	desc "group WORD", "Group entries by finished day, month or yeaar"
 	option "index", type: :string, default: "day", desc: ""
 	def group(word)
+		__configure(options)		
+
 		entries = get_entries(word, options)
 
 		grouped_entries = 
@@ -152,6 +166,11 @@ class CLI < Thor
 
 	private
 	
+	def __configure(options)
+		# set logger
+		ClosedAuctionAnalyzer::SimpleLogger.instance(options[:debug])
+	end
+
 	def get_entries(word, options)
 		client = ClosedAuction::Client.new
 
@@ -164,8 +183,8 @@ class CLI < Thor
 
 		# apply filter (all filters are evaluated by AND)
 		if !forward_filter.empty? || !inverse_filter.empty?
-			L.debug "forward: " + forward_filter.join(", ")
-			L.debug "inverse: " + inverse_filter.join(", ")
+			ClosedAuctionAnalyzer::SimpleLogger.instance.debug "forward: " + forward_filter.join(", ")
+			ClosedAuctionAnalyzer::SimpleLogger.instance.debug "inverse: " + inverse_filter.join(", ")
 
 			entries.select! do |entry| 
 				title = entry.title
@@ -225,8 +244,9 @@ class CLI < Thor
 		when /yml|yaml|/
 			puts rows.map{|row| columns.zip(row).to_h}.to_yaml
 		else
-			L.fatal "Invalid output format: `#{format}`" and exit 1
+			ClosedAuctionAnalyzer::SimpleLogger.instance.fatal "Invalid output format: `#{format}`" and exit 1
 		end
+
 	end
 
 	def print_verbose(e)

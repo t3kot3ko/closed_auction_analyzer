@@ -5,15 +5,12 @@ require "date"
 require "logger"
 
 require "closed_auction_analyzer/exceptions"
-
-L = Logger.new(STDOUT)
-if ENV["DISABLE_LOGGER"] == "true"
-	L.level = Logger::FATAL
-end
+require "closed_auction_analyzer/simple_logger"
 
 module ClosedAuction; end
 
 class ClosedAuction::Entry < Struct.new(:url, :title, :end_price, :start_price, :end_date, :end_time, :bid_count)
+
 	def initialize(url, title, end_price, start_price, end_date, end_time, bid_count)	
 		# TODO: inline to create_entry
 		start_price_formatted = start_price.gsub(" 円", "").gsub(",", "").to_i
@@ -36,13 +33,14 @@ class ClosedAuction::Client
 
 	def initialize
 		@agent =  Net::HTTP.new(BASE_URI.host, BASE_URI.port)
+  	@L = ClosedAuctionAnalyzer::SimpleLogger.instance
 	end
 
 	def search(query)
 		body = nil
 		@agent.start do |http|
 			url = "/closedsearch?#{query.build}"
-			L.debug url
+			@L.debug url
 			response = http.get(url)
 			body = response.body
 		end
@@ -51,7 +49,7 @@ class ClosedAuction::Client
 		table = doc.css("#AS1m1.AS1m.ASic").first
 
 		unless table
-			L.debug "No result found"
+			@L.debug "No result found"
 			return []
 		end
 

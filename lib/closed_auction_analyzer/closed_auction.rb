@@ -109,6 +109,7 @@ class ClosedAuction::SearchQuery
 	# o1: order (a: asc, d: desc)
 	# per_page: 20, 50 or 100
 	def initialize(word, min: nil, max: nil, istatus: 0, abranch: 0, sort: "cbids", order: "d", page: 1, per_page: 100)
+
 		@page = page
 		@per_page = [20, 50, 100].include?(per_page) ? per_page : 100
 
@@ -154,7 +155,6 @@ if __FILE__ == $0
 
 	entries.sort_by(&:end_price).each do |e|
 		detailed = DetailedAuction::Client.new(e.url).parse
-		p detailed
 		puts "#{e.title}, #{e.end_price}"
 	end
 end

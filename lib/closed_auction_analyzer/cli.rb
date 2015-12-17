@@ -176,7 +176,13 @@ class CLI < Thor
 
 		filter_options = options[:filter]
 		query_options = options.reject{|k, v| k == :filter}
-		query = __create_query(word, query_options)
+
+		query_options_sym_key = {}
+		query_options.each do |key, value|
+			query_options_sym_key[key.to_sym] = value
+		end
+
+		query = __create_query(word, query_options_sym_key)
 		forward_filter, inverse_filter = __create_filter(filter_options)
 
 		entries = options[:all] ? client.search_all(query) : client.search(query)

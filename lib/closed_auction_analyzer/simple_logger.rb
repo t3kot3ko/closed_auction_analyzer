@@ -9,10 +9,8 @@ class ClosedAuctionAnalyzer::SimpleLogger
 	def initialize(out)
 		@L = 
 			if out
-				puts "logger on"
 				Logger.new(STDOUT)
 			else
-				puts "logger off"
 				ClosedAuctionAnalyzer::DummyLogger.new
 			end
 	end
